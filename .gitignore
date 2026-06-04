@@ -1,0 +1,9 @@
+# dependencies
+/node_modules
+
+# База данных
+tasks.db
+tasks.db-journal
+
+# Файлы окружения
+.env
