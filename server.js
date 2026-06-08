@@ -8,19 +8,28 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json());
 
-// Получить все задачи (GET /tasks)
+// Получить все задачи с фильтрацией и сортировкой
 app.get('/tasks', (req, res) => {
   try {
-    const tasks = db.getAllTasks();
+    let tasks = db.getAllTasks();
 
-    // Преобразуем isChecked из 1/0 в boolean для фронтенда
-    const formattedTasks = tasks.map(task => ({
-      ...task,
-      isChecked: task.isChecked === 1
-    }));
+    // Фильтрация
+    const { filter, sortType } = req.query;
 
-    // Отправляем в формате, который ожидает твой фронтенд
-    res.json({ rows: formattedTasks });
+    if (filter === 'active') {
+      tasks = tasks.filter(task => !task.isChecked);
+    } else if (filter === 'completed') {
+      tasks = tasks.filter(task => task.isChecked);
+    }
+
+    // Сортировка
+    if (sortType === 'new') {
+      tasks.sort((a, b) => b.createdAt - a.createdAt);
+    } else if (sortType === 'old') {
+      tasks.sort((a, b) => a.createdAt - b.createdAt);
+    }
+
+    res.json({ rows: tasks });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -49,7 +58,7 @@ app.post('/task', (req, res) => {
   }
 });
 
-// Редактировать задачу (PATCH /task/:uuid) - для твоего editTodo и toggleComplete
+// Редактировать задачу (PATCH /task/:uuid)
 app.patch('/task/:uuid', (req, res) => {
   try {
     const { uuid } = req.params;
@@ -107,9 +116,9 @@ app.delete('/tasks', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Available endpoints:`);
-  console.log(`  GET    /tasks            - получить все задачи`);
-  console.log(`  POST   /task             - добавить задачу`);
-  console.log(`  PATCH  /task/:uuid       - редактировать задачу`);
-  console.log(`  DELETE /task/:uuid       - удалить одну задачу`);
-  console.log(`  DELETE /tasks            - удалить все задачи`);
+  console.log(`  GET    /tasks?filter=active&sortType=new - получить задачи с фильтрацией и сортировкой`);
+  console.log(`  POST   /task                             - добавить задачу`);
+  console.log(`  PATCH  /task/:uuid                       - редактировать задачу`);
+  console.log(`  DELETE /task/:uuid                       - удалить одну задачу`);
+  console.log(`  DELETE /tasks                            - удалить все задачи`);
 });
