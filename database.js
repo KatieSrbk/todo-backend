@@ -20,12 +20,24 @@ db.exec(`
 
 // Получить все задачи
 export const getAllTasks = () => {
-  return db.prepare('SELECT * FROM tasks ORDER BY createdAt DESC').all();
+  const tasks = db.prepare('SELECT * FROM tasks ORDER BY createdAt DESC').all();
+
+  return tasks.map((task) => ({
+    ...task,
+    isChecked: task.isChecked === 1, // 1 → true, 0 → false
+  }));
 };
 
 // Получить задачу по UUID
 export const getTaskByUuid = (uuid) => {
-  return db.prepare('SELECT * FROM tasks WHERE uuid = ?').get(uuid);
+  const task = db.prepare('SELECT * FROM tasks WHERE uuid = ?').get(uuid);
+
+  if (!task) return undefined;
+
+  return {
+    ...task,
+    isChecked: task.isChecked === 1,
+  };
 };
 
 // Добавить задачу

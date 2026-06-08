@@ -47,12 +47,7 @@ app.post('/task', (req, res) => {
     const task = db.createTask(text, isChecked || false);
 
     // Отправляем задачу в формате, который ожидает фронтенд
-    res.status(201).json({
-      uuid: task.uuid,
-      text: task.text,
-      isChecked: task.isChecked === 1,
-      createdAt: task.createdAt
-    });
+    res.status(201).json(task);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -71,16 +66,11 @@ app.patch('/task/:uuid', (req, res) => {
 
     // Обновляем только переданные поля
     const newText = text !== undefined ? text : existingTask.text;
-    const newIsChecked = isChecked !== undefined ? isChecked : existingTask.isChecked === 1;
+    const newIsChecked = isChecked !== undefined ? isChecked : existingTask.isChecked;
 
     const updatedTask = db.updateTask(uuid, newText, newIsChecked);
 
-    res.json({
-      uuid: updatedTask.uuid,
-      text: updatedTask.text,
-      isChecked: updatedTask.isChecked === 1,
-      createdAt: updatedTask.createdAt
-    });
+    res.json(updatedTask);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -106,6 +96,12 @@ app.delete('/task/:uuid', (req, res) => {
 // Удалить все задачи (DELETE /tasks)
 app.delete('/tasks', (req, res) => {
   try {
+    const tasks = db.getAllTasks();
+
+    if (tasks.length === 0) {
+      return res.status(200).json({ message: 'The list is already empty' });
+    }
+
     db.deleteAllTasks();
     res.status(200).json({ message: 'All tasks deleted successfully' });
   } catch (error) {
