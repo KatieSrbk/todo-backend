@@ -14,12 +14,12 @@ app.get('/tasks', (req, res) => {
     let tasks = db.getAllTasks();
 
     // Фильтрация
-    const { filter, sortType } = req.query;
+    const { filter, sortType, page = 1, limit = 5 } = req.query;
 
     if (filter === 'active') {
-      tasks = tasks.filter(task => !task.isChecked);
+      tasks = tasks.filter((task) => !task.isChecked);
     } else if (filter === 'completed') {
-      tasks = tasks.filter(task => task.isChecked);
+      tasks = tasks.filter((task) => task.isChecked);
     }
 
     // Сортировка
@@ -29,7 +29,17 @@ app.get('/tasks', (req, res) => {
       tasks.sort((a, b) => a.createdAt - b.createdAt);
     }
 
-    res.json({ rows: tasks });
+    const totalCount = tasks.length;
+    const currentPage = parseInt(page);
+    const itemsPerPage = parseInt(limit);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedTasks = tasks.slice(startIndex, endIndex);
+
+    res.json({
+      rows: paginatedTasks,
+      totalTasksCount: totalCount,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -66,7 +76,8 @@ app.patch('/task/:uuid', (req, res) => {
 
     // Обновляем только переданные поля
     const newText = text !== undefined ? text : existingTask.text;
-    const newIsChecked = isChecked !== undefined ? isChecked : existingTask.isChecked;
+    const newIsChecked =
+      isChecked !== undefined ? isChecked : existingTask.isChecked;
 
     const updatedTask = db.updateTask(uuid, newText, newIsChecked);
 
